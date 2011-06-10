@@ -1,0 +1,182 @@
+<html><!-- JSWikiMini Version 1.0.1Min -->
+    <head>
+        <title>FrontPage</title>
+<style type="text/css">
+body { font-family: "Courier New", monospace; }
+pre { line-height:130%; }
+a { text-decoration: none }
+a:hover { text-decoration: underline }
+</style>
+<script>
+
+try{
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+}catch(e){
+    alert("Error:" + e.message);
+}
+var FullPath = location.href.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ");
+if(fso.fileExists(FullPath)){
+    var BaseFolder = fso.getFile(FullPath).parentFolder;
+}else{
+    alert('File not Exists:' + FullPath);
+}
+var LinkPattern = /((mailto|http|https|ftp):[\x21-\x7E]*)|([A-Z][a-z]+([A-Z][a-z]+)+)/g;
+var WikiName = /[A-Z][a-z]+([A-Z][a-z]+)+/;
+var ExtensionFilter = /\.txt$/i;
+var FirstPage = 'FrontPage';
+var IndexPageName = 'Index';
+var elmContent,elmHeaderH1;
+
+function init(){
+    elmContent = document.getElementById('content');
+    elmHeaderH1 = document.getElementById('headerH1');
+    openPage(FirstPage);
+}
+
+function showIndexPage(){
+    elmHeaderH1.innerText = document.title = IndexPageName;
+    document.getElementById("editLink").style.display = "none";
+
+    var PageNames = getPageNameList();
+    var links = [];
+    for(var i in PageNames){
+        var li = "<li><a href='javascript:openPage(\""+PageNames[i]+"\");'>" + PageNames[i] + "</a></li>";
+        
+        links.push(li);
+    }
+    elmContent.innerHTML = "<ul>" + links.join("") + "</ul>";
+    
+}
+
+
+function savePage(pagename){
+    
+    var message = document.getElementById('textarea').value;
+    
+    if( message ){
+        writePageContent(pagename, message);
+        openPage(pagename);
+    }else{
+        deletePage(pagename);
+        openPage(FirstPage);
+    }
+    
+    return false;
+}
+
+
+function writePageContent(pagename, message){
+    fso.createTextFile(getPagePath(pagename)).write(message).Close();
+}
+
+function deletePage(pagename){
+    if( fso.fileExists(getPagePath(pagename)) ){
+        fso.deleteFile(getPagePath(pagename));
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
+function editPage(pagename){
+    elmHeaderH1.innerText = document.title = pagename;
+
+    var content = ( fso.fileExists(getPagePath(pagename)) )? readPageContent(pagename) : '';
+
+    elmContent.innerHTML =
+       "<form onsubmit='savePage(\"" + pagename + "\"); return false;'>"
+//     + "<input type='submit' value='submit'><br />"
+     + "<textarea cols='80' rows='20' id='textarea' wrap='off'>" + content + "</textarea><br />"
+     + "<input type='submit' value='submit'><br />"
+     + "</form>";
+
+}
+
+function openPage(pagename){
+    elmHeaderH1.innerText = document.title = pagename;
+    document.getElementById("editLink").style.display = "inline";
+
+    if(! fso.fileExists(getPagePath(pagename)) ){
+        elmContent.innerHTML = "";
+        return;
+    }else{
+        var content = readPageContent(pagename);
+        content = content.replace(LinkPattern, makeLink );
+        elmContent.innerHTML = "<pre>" + content + "</pre>";
+    }
+
+}
+
+function readPageContent(pagename){
+    return (fso.openTextFile(getPagePath(pagename))).readAll();
+}
+
+function makeLink($0,$1,$2){
+    var matched = $0;
+    var link;
+
+    if(matched.match(WikiName)){
+
+        pagename = matched;
+
+        if(fso.fileExists(getPagePath(pagename))){
+            link = "<a href='javascript:openPage(\""
+                 + pagename
+                 + "\");'>" + pagename + "</a>";
+             
+        }else{
+            link = pagename + "<a href='javascript:editPage(\"" + pagename + "\")' title='create a Page'>?</a>";
+        }
+    }else{
+        link = "<a href='" + matched + "'>" + matched + "</a>";
+    }
+    
+    return link;
+}
+
+
+function getPagePath(pagename){
+    return BaseFolder.Path + "\\" +  pagename + ".txt";
+}
+
+
+function getPageNameList(){
+    var TextFiles = getFiles(BaseFolder, ExtensionFilter);
+    var PageNames = [];
+    for(var i in TextFiles){
+        PageNames.push(fso.getBaseName(TextFiles[i]));
+    }
+    return PageNames;
+}
+
+function getFiles(objFolder, filter) {
+   var objEnu = new Enumerator(objFolder.Files);
+   var files = [];
+   for (; !objEnu.atEnd(); objEnu.moveNext() ){
+       if(objEnu.item().Name.match(filter)){
+   files.push(objEnu.item());
+       }
+   }
+   return files;
+}
+
+</script>
+    </head>
+    <body onload="init()">
+        <table width="100%" border="0">
+            <tr valign="top">
+                <td>
+                    <h1 id="headerH1">FrontPage</h1>
+                </td>
+                <td align="right">
+                    <a href="javascript:openPage('FrontPage')">FrontPage</a> | 
+                    <span id="editLink"><a href="javascript:editPage(document.title)">Edit</a> | </span>
+                    <a href="javascript:showIndexPage()">Index</a> | 
+                </td>
+            </tr>
+        </table>
+    <div id="content"></div>
+
+    </body>
+</html>

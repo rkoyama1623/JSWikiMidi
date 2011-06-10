@@ -1,0 +1,269 @@
+<html>
+<!-- JSWikiMini Version 1.0 -->
+    <head>
+<script>
+/** Initial Settings */
+var debug = false;
+try{
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+}catch(e){
+    alert("ActiveX Error:" + e.message);
+}
+
+var BaseURL = location.href;
+var FullPath = BaseURL.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ");
+
+if(fso.fileExists(FullPath)){
+    var BaseFile = fso.getFile(FullPath);
+}else{
+    alert('File not Exists:' + FullPath);
+}
+var BaseFolder = BaseFile.parentFolder;
+/** Parameters */
+/* RegExp Patterns */
+var WikiName = '<([^>]+)>'; // 正規表現リテラルはこう書いても動く。
+var LinkPattern = new RegExp('((mailto|http|https|ftp):[\x21-\x7E]*)|(' + WikiName + ')', 'g');
+var ExtensionFilter = /\.txt$/i;
+
+/* UI Definitions */
+var FirstPageName = 'トップページ';
+var EditPageName = '編集'
+var IndexPageName = '一覧';
+var HelpPageName = 'ヘルプ';
+var AlterContent  = '編集ボタンを押すと記事を作成できます。';
+/* Define Global Variables */
+var elmContent;
+var elmHeaderH1;
+
+
+function init(){
+    elmContent = $id('content');
+    elmHeaderH1 = $id('headerH1');
+    openFirstPage();
+    $id("linkToFirstPage").innerText = FirstPageName;
+    $id("linkToIndexPage").innerText = IndexPageName;
+    $id("linkToHelpPage").innerText  = HelpPageName;
+    $id("linkToEditPage").innerText  = EditPageName;
+
+}
+
+function editCurrentPage(){
+    editPage(getCurrentPageName());
+}
+
+function getCurrentPageName(){
+    return document.title;
+}
+
+function showIndexPage(){
+    setPageTitle(IndexPageName);
+    $id("editLink").style.display = "none";
+
+    var PageNames = getPageNameList();
+    var links = [];
+    for(var i in PageNames){
+        var li = "<li><a href='javascript:openPage(\""+PageNames[i]+"\");'>" + PageNames[i] + "</a></li>";
+        
+        links.push(li);
+    }
+    elmContent.innerHTML = "<ul>" + links.join("") + "</ul>";
+    
+}
+
+
+function savePage(pagename){
+    
+    var message = $id('textarea').value;
+    
+    if( message ){
+        writePageContent(pagename, message);
+        openPage(pagename);
+    }else{
+        var ret = deletePage(pagename);
+        dump(ret);
+        openFirstPage();
+        return false;
+    }
+
+    
+    return false;
+}
+
+
+function writePageContent(pagename, message){
+    var file = fso.createTextFile(getPagePath(pagename));
+    file.write(message);
+    file.Close();
+    return;
+}
+
+function deletePage(pagename){
+    if(pageExists(pagename)){
+        fso.deleteFile(getPagePath(pagename));
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
+function editPage(pagename){
+
+    setPageTitle(pagename);
+
+    var content = ''
+
+
+    if( pageExists(pagename) ){
+        content = readPageContent(pagename);
+    }
+
+    var html =
+       "<form onsubmit='savePage(\"" + pagename + "\"); return false;'>"
+     + "<input type='submit' value='submit'><br />"
+     + "<textarea cols='80' rows='20' id='textarea' wrap='off'>" + content + "</textarea><br />"
+     + "<input type='submit' value='submit'><br />"
+     + "</form>";
+
+    elmContent.innerHTML = html;
+
+}
+
+function openPage(pagename){
+    setPageTitle(pagename);
+    $id("editLink").style.display = "inline";
+
+    if(! pageExists(pagename) ){
+        elmContent.innerHTML = AlterContent;
+        return;
+    }else{
+        var content = readPageContent(pagename);
+        content = content.replace(LinkPattern, makeLink );
+        elmContent.innerHTML = "<pre>" + content + "</pre>";
+    }
+
+}
+
+function openFirstPage(){
+    openPage(FirstPageName);
+}
+
+function openHelpPage(){
+    openPage(HelpPageName);
+}
+
+function readPageContent(pagename){
+    var file = fso.openTextFile(getPagePath(pagename));
+    var content = file.readAll();
+    file.Close();
+    return content;
+}
+
+function makeLink($0,$1,$2){
+    var matched = $0;
+    var link;
+    //alert("$0:" + $0 + "\n$1:" + $1 + "\n$2:" + $2 );
+
+    if(matched.match(WikiName)){
+    //WikiNameとマッチした場合
+        pagename = RegExp.$1;
+
+        if(pageExists(pagename)){
+            link = "<a href='javascript:openPage(\""
+                 + pagename
+                 + "\");'>" + pagename + "</a>";
+             
+        }else{
+            link = pagename + "<a href='javascript:editPage(\"" + pagename + "\")' title='create a Page'>?</a>";
+            
+        }
+    }else{
+    //URLとマッチした場合
+        link = "<a href='" + matched + "'>" + matched + "</a>";
+    }
+    
+    return link;
+}
+
+
+function setPageTitle(pagename){
+    document.title = pagename;
+    elmHeaderH1.innerText = pagename;
+}
+
+function pageExists(pagename){
+    var filepath = getPagePath(pagename);
+    return fso.fileExists(filepath);
+}
+
+function getPagePath(pagename){
+    return BaseFolder.Path + "\\" +  pagename + ".txt";
+}
+
+
+function getPageNameList(){
+    var TextFiles = getFiles(BaseFolder, ExtensionFilter);
+    var PageNames = [];
+    for(var i in TextFiles){
+        PageNames.push(fso.getBaseName(TextFiles[i]));
+    }
+    return PageNames;
+}
+
+function getFiles(objFolder, filter) {
+   var objEnu = new Enumerator(objFolder.Files);
+   var files = [];
+   for (; !objEnu.atEnd(); objEnu.moveNext() ){
+       if(objEnu.item().Name.match(filter)){
+   files.push(objEnu.item());
+       }
+   }
+   return files;
+}
+
+
+function $id(id){
+    return document.getElementById(id);
+}
+
+
+function dump(str){
+    if(debug){ alert(str); }
+}
+
+
+</script>
+
+<title>Blank</title>
+
+<style type="text/css">
+<!--
+body { font-family: "Courier New", monospace; }
+pre { line-height:130%; }
+a { text-decoration: none }
+a:hover { text-decoration: underline }
+-->
+</style>
+                
+    </head>
+    <body onload="init()">
+        <table width="100%" border="0">
+            <tr valign="top">
+                <td>
+                    <h1 id="headerH1">Blank</h1>
+                </td>
+                <td align="right">
+                    <a id="linkToFirstPage" href="javascript:openFirstPage()">Blank</a> | 
+                    <span id="editLink"><a id="linkToEditPage" href="javascript:editCurrentPage()">Edit</a> | </span>
+                    <a id="linkToIndexPage" href="javascript:showIndexPage()">Index</a> | 
+                    <a id="linkToHelpPage" href="javascript:openHelpPage()">Help</a> | 
+                </td>
+            </tr>
+        </table>
+    <div id="content" ></div>
+
+    </body>
+</html>
+
+
+
