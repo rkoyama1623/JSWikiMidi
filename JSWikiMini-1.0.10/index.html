@@ -72,7 +72,7 @@ function savePage(pagename){
     }else{
         var ret = deletePage(pagename);
         dump(ret);
-        openPage(FirstPage);
+        openFirstPage();
         return false;
     }
 
@@ -111,7 +111,7 @@ function editPage(pagename){
 
     var html =
        "<form onsubmit='savePage(\"" + pagename + "\"); return false;'>"
-//     + "<input type='submit' value='submit'><br />"
+     + "<input type='submit' value='submit'><br />"
      + "<textarea cols='80' rows='20' id='textarea' wrap='off'>" + content + "</textarea><br />"
      + "<input type='submit' value='submit'><br />"
      + "</form>";
