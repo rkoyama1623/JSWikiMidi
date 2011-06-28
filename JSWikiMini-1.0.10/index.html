@@ -135,6 +135,13 @@ function openPage(pagename){
 
 }
 
+function openFirstPage(){
+    openPage(FirstPageName);
+}
+
+function openHelpPage(){
+    openPage(HelpPageName);
+}
 
 function readPageContent(pagename){
     var file = fso.openTextFile(getPagePath(pagename));
