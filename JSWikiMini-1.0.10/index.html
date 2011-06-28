@@ -2,16 +2,8 @@
 <!-- JSWikiMini Version 1.0 -->
     <head>
         <title>FrontPage</title>
-<style type="text/css">
-<!--
-body { font-family: "Courier New", monospace; }
-pre { line-height:130%; }
-a { text-decoration: none }
-a:hover { text-decoration: underline }
--->
-</style>
 <script>
-/** èâä˙ê›íË */
+/** Initial Settings */
 var debug = false;
 try{
     var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -225,18 +217,30 @@ function dump(str){
 
 
 </script>
+
+<title>Blank</title>
+
+<style type="text/css">
+<!--
+body { font-family: "Courier New", monospace; }
+pre { line-height:130%; }
+a { text-decoration: none }
+a:hover { text-decoration: underline }
+-->
+</style>
                 
     </head>
-    <body bgcolor="white" onload="init()">
+    <body onload="init()">
         <table width="100%" border="0">
             <tr valign="top">
                 <td>
-                    <h1 id="headerH1">FrontPage</h1>
+                    <h1 id="headerH1">Blank</h1>
                 </td>
                 <td align="right">
-                    <a href="javascript:openPage('FrontPage')">FrontPage</a> | 
-                    <span id="editLink"><a href="javascript:editCurrentPage()">Edit</a> | </span>
-                    <a href="javascript:showIndexPage()">Index</a> | 
+                    <a id="linkToFirstPage" href="javascript:openFirstPage()">Blank</a> | 
+                    <span id="editLink"><a id="linkToEditPage" href="javascript:editCurrentPage()">Edit</a> | </span>
+                    <a id="linkToIndexPage" href="javascript:showIndexPage()">Index</a> | 
+                    <a id="linkToHelpPage" href="javascript:openHelpPage()">Help</a> | 
                 </td>
             </tr>
         </table>
