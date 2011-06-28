@@ -8,7 +8,7 @@ var debug = false;
 try{
     var fso = new ActiveXObject("Scripting.FileSystemObject");
 }catch(e){
-    alert("Error:" + e.message);
+    alert("ActiveX Error:" + e.message);
 }
 
 var BaseURL = location.href;
