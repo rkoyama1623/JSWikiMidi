@@ -1,7 +1,6 @@
 <html>
 <!-- JSWikiMini Version 1.0 -->
     <head>
-        <title>FrontPage</title>
 <script>
 /** Initial Settings */
 var debug = false;
@@ -21,12 +20,18 @@ if(fso.fileExists(FullPath)){
 }
 var BaseFolder = BaseFile.parentFolder;
 /** Parameters */
-var LinkPattern = /((mailto|http|https|ftp):[\x21-\x7E]*)|([A-Z][a-z]+([A-Z][a-z]+)+)/g;
-var WikiName = /[A-Z][a-z]+([A-Z][a-z]+)+/;
+/* RegExp Patterns */
+var WikiName = '[A-Z][a-z]+([A-Z][a-z]+)+';
+var URLPattern = '(mailto|http|https|ftp):[\x21-\x7E]*';
+var LinkPattern = new RegExp('(' + URLPattern + ')|(' + WikiName + ')','g');
 var ExtensionFilter = /\.txt$/i;
-var FirstPage = 'FrontPage';
+
+/* UI Definitions */
+var FirstPageName = 'FrontPage';
+var EditPageName = 'Edit';
 var IndexPageName = 'Index';
 
+/* Define Global Variables */
 var elmContent;
 var elmHeaderH1;
 
@@ -34,7 +39,10 @@ var elmHeaderH1;
 function init(){
     elmContent = $id('content');
     elmHeaderH1 = $id('headerH1');
-    openPage(FirstPage);
+    openFirstPage();
+    $id("linkToFirstPage").innerText = FirstPageName;
+    $id("linkToIndexPage").innerText = IndexPageName;
+    $id("linkToEditPage").innerText  = EditPageName;
 
 }
 
