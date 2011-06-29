@@ -22,7 +22,8 @@ var BaseFolder = BaseFile.parentFolder;
 /** Parameters */
 /* RegExp Patterns */
 var WikiName = '<([^>]+)>'; // ³‹K•\Œ»ƒŠƒeƒ‰ƒ‹‚Í‚±‚¤‘‚¢‚Ä‚à“®‚­B
-var LinkPattern = new RegExp('((mailto|http|https|ftp):[\x21-\x7E]*)|(' + WikiName + ')', 'g');
+var URLPattern = '(mailto|http|https|ftp):[\x21-\x7E]*';
+var LinkPattern = new RegExp('(' + URLPattern + ')|(' + WikiName + ')','g');
 var ExtensionFilter = /\.txt$/i;
 
 /* UI Definitions */
@@ -42,8 +43,8 @@ function init(){
     openFirstPage();
     $id("linkToFirstPage").innerText = FirstPageName;
     $id("linkToIndexPage").innerText = IndexPageName;
-    $id("linkToHelpPage").innerText  = HelpPageName;
     $id("linkToEditPage").innerText  = EditPageName;
+    $id("linkToHelpPage").innerText  = HelpPageName;
 
 }
 
