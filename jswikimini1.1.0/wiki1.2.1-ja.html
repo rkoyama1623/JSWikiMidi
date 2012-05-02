@@ -56,15 +56,18 @@ wiki.init = function(){
     }
 
     this.view._id("linkToHomePage").onclick   = function(){
-      wiki.openHomePage(); return false;
+      wiki.openHomePage();
+      return false;
     };
 
     this.view._id("linkToEditPage").onclick  = function(){
-      wiki.editCurrentPage(); return false;
+      wiki.editCurrentPage();
+      return false;
     };
 
     this.view._id("linkToIndexPage").onclick = function(){
-      wiki.openIndexPage(); return false; 
+      wiki.openIndexPage();
+      return false; 
     };
 
     this.openHomePage();
