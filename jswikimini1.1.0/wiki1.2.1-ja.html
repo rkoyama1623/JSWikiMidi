@@ -7,16 +7,9 @@ JSWikiMini Version 1.1.0
 -0.0.3     storage層をオブジェクトとして独立させた。
 -0.0.4    config層をオブジェクトとして独立させた。
 -0.0.5    view層をオブジェクトとして独立させた。
--1.1.0    MVC構造になるように大規模にリファクタリングした。
-        グローバル変数をwiki１つのみにした。
-        Model : wiki.dbオブジェクト
-        View  : wiki.viewオブジェクト
-        Controller : wikiオブジェクト
--1.1.1
-    HTMLとJSを完全に分離した。(HTML内のhref="javascript:"をやめて、JS側でonclick属性に関数を代入する方式に変更した)
-    
+-1.1.0    MVC構造になるように大規模にリファクタリングした。グローバル変数を１つのみにした。
+-1.1.1   HTMLとJSを完全に分離した。
 -1.2.1
-    
 */
 var wiki = {
     /* config */
