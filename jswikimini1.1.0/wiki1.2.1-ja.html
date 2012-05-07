@@ -1,22 +1,15 @@
+<!DOCTYPE html>
 <html>
 <head>
 <script>
-
 /*
 JSWikiMini Version 1.1.0
-
-CHANGELOG
-
--0.0.3
-    storage層をオブジェクトとして独立させた。
--0.0.4
-    config層をオブジェクトとして独立させた。
--0.0.5
-    view層をオブジェクトとして独立させた。
--1.1.0
-    MVC構造になるように大規模にリファクタリングした。
+-0.0.3     storage層をオブジェクトとして独立させた。
+-0.0.4    config層をオブジェクトとして独立させた。
+-0.0.5    view層をオブジェクトとして独立させた。
+-1.1.0    MVC構造になるように大規模にリファクタリングした。
         グローバル変数をwiki１つのみにした。
-        Model : wiki.storageオブジェクト
+        Model : wiki.dbオブジェクト
         View  : wiki.viewオブジェクト
         Controller : wikiオブジェクト
 -1.1.1
@@ -25,32 +18,20 @@ CHANGELOG
 -1.2.1
     
 */
-//============  declaration of objects =============
 var wiki = {
+    /* config */
+    config : {
+        TopPageName : 'トップページ',
+        IndexPageName : 'ページ一覧',
+        regLink : /((mailto|http|https|ftp):[\x21-\x7E]*)|<(.+)>/g,
+        patternWikiLink : /<(.+)>/,
 
-    config  : {},
-    storage : {},
-    view    : {},
+        dummy : null
+    },
+    
+    main : function() {
 
-    dummy : null
-
-};
-
-//============  config object ===================
-
-wiki.config = {
-    TopPageName : 'トップページ',
-    IndexPageName : 'ページ一覧',
-    regLink : /((mailto|http|https|ftp):[\x21-\x7E]*)|<(.+)>/g,
-    patternWikiLink : /<(.+)>/,
-
-    dummy : null
-};
-
-
-wiki.init = function(){
-
-    var ret = this.storage.init();
+    var ret = this.db.init();
     if(ret === false){
         return false;
     }
@@ -73,17 +54,18 @@ wiki.init = function(){
     this.openHomePage();
 
 }
+};
 
 wiki.openPage = function (pagename){
 
     this.view.setPageTitle(pagename);
     this.view.showEditLink();
 
-    if(! this.storage.exists(pagename) ){
+    if(! this.db.exists(pagename) ){
         this.view.setContent('');
         return ;
     }else{
-        var content = this.storage.read(pagename);
+        var content = this.db.read(pagename);
         //alert(content);
         content = content.replace(this.config.regLink, this.makeLink );
         //alert(content);
@@ -102,7 +84,7 @@ wiki.openIndexPage = function (){
     this.view.setPageTitle(this.config.IndexPageName);
     this.view.hideEditLink();
 
-    var PageNames = this.storage.keys();
+    var PageNames = this.db.keys();
 
     this.view.renderIndexPage(PageNames);
     
@@ -111,13 +93,13 @@ wiki.openIndexPage = function (){
 
 wiki.savePage = function (pagename){
     
-    var content = this.view.getInputContent();
+    var content = this.view.getInputValue();
     
     if( content ){
-        this.storage.store(pagename, content);
+        this.db.save(pagename, content);
         this.openPage(pagename);
     }else{
-        var ret = this.storage._delete(pagename);
+        var ret = this.db.remove(pagename);
         this.openHomePage();
     }
     
@@ -136,8 +118,8 @@ wiki.editPage = function (pagename){
 
     var content;
 
-    if( this.storage.exists(pagename) ){
-        content = this.storage.read(pagename);
+    if( this.db.exists(pagename) ){
+        content = this.db.read(pagename);
     }else{  
         content = '';
     }
@@ -157,7 +139,7 @@ wiki.makeLink = function ($0,$1,$2){
     //WikiNameとマッチした場合
         //alert("RegExp.$1:" + RegExp.$1);
         pagename = RegExp.$1;
-        if(wiki.storage.exists(pagename)){
+        if(wiki.db.exists(pagename)){
             link = "<a href='javascript:wiki.openPage(\"" + pagename + "\");'>" + pagename + "</a>";
              
         }else{
@@ -172,27 +154,116 @@ wiki.makeLink = function ($0,$1,$2){
     return link;
 }
 
+//============  Storage Object ===================
+wiki.db = {
+    _fso : null,
+    _regExtension : /\.txt$/i,
 
+    init : function() {
+        try{
+            this._fso = new ActiveXObject("Scripting.FileSystemObject");
+        }catch(e){
+            var str = "" //"エラー:\r\n" + e.message + "\r\n\r\n"
+                   + "ActiveXを実行できませんでした。下記を試してみてください。\r\n\r\n"
+                   + "・ブラウザのインターネットオプション＞セキュリティ＞イントラネット＞レベルのカスタマイズでActiveXの実行を許可する。\r\n"
+                   + "・このHTMLファイルを右クリックして、「ブロックの解除」をする。\r\n"
+                   + "\r\n"
+                   + "(本ソフトウェアのご利用は自己責任でお願いします。)"
 
-//============  View Object ===================
-
-
-wiki.view = {
-    setPageTitle : function(pagename){
-        document.title = pagename;
-        this._id('headerH1').innerText = pagename;
+            alert(str);
+            return;
+        }
     },
 
-    showEditLink  : function(){
+    read : function(pagename) {
+        var file = this._fso.openTextFile(this._getPagePath(pagename));
+        var content = file.readAll();
+        file.Close();
+        return content;
+    },
+
+    exists : function(pagename) {
+        var filepath = this._getPagePath(pagename);
+        return this._fso.fileExists(filepath);
+    },
+
+    keys : function() {
+        var TextFiles = this._getFiles(this._getBaseFolder(), this._regExtension);
+        var PageNames = [];
+        for(var i in TextFiles){
+            PageNames.push(this._fso.getBaseName(TextFiles[i]));
+        }
+        return PageNames;
+    },
+
+    save : function(pagename, message) {
+        var file = this._fso.createTextFile(this._getPagePath(pagename));
+        file.write(message);
+        file.Close();
+        return;
+    },
+
+    remove : function(pagename) {
+        if(this.exists(pagename)){
+            this._fso.deleteFile(this._getPagePath(pagename));
+            return true;
+        }else{
+            return false;
+        }
+    },
+
+    _getPagePath : function(pagename) {
+        return this._getBaseFolder().Path + "\\" +  pagename + ".txt";
+    },
+
+    _getFiles : function (objFolder, filter) {
+       var objEnu = new Enumerator(objFolder.Files);
+       var files = [];
+       for (; !objEnu.atEnd(); objEnu.moveNext() ){
+           if(objEnu.item().Name.match(filter)){
+       files.push(objEnu.item());
+           }
+       }
+       return files;
+    },
+
+    _getBaseFolder : function() {
+        var BaseURL = location.href;
+        var FullPath = BaseURL.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ");
+
+        if(this._fso.fileExists(FullPath)){
+          var thisFile = this._fso.getFile(FullPath);
+        }else{
+          alert('File not Exists:' + FullPath);
+        }
+        return thisFile.parentFolder;
+    },
+
+    dummy : null
+};// db
+
+//============  View Object ===================
+wiki.view = {
+
+
+
+
+
+
+    setPageTitle : function(pagename) {
+        document.title = pagename;
+        this._id("headerH1").innerText = pagename;
+    },
+
+    showEditLink : function() {
         this._id("editLink").style.display = "inline";
     },
 
-    hideEditLink : function(){
+    hideEditLink : function() {
         this._id("editLink").style.display = "none";
     },
 
-
-    _id : function (id){
+    _id : function (id) {
         return document.getElementById(id);
     },
 
@@ -200,17 +271,18 @@ wiki.view = {
         this._id('content').innerHTML = html;
     },
 
-    getCurrentPageName : function(){
+    getCurrentPageName : function() {
         return document.title;
     },
 
-    getInputContent : function() {
+    getInputValue : function() {
         return this._id('textarea').value;
     },
 
-    renderInputForm : function(pagename, content){
+    renderInputForm : function(pagename, content) {
         var html =
            "<form onsubmit='wiki.savePage(\"" + pagename + "\"); return false;'>"
+         + "<input type='submit' value='save'><br />"
          + "<textarea cols='80' rows='20' id='textarea' wrap='off'>" + content + "</textarea><br />"
          + "<input type='submit' value='save'><br />"
          + "</form>";
@@ -228,112 +300,9 @@ wiki.view = {
     },
 
     dummy : null
+};
 
-}
-
-//============  Storage Object ===================
-wiki.storage = {
-
-    _regExtension : /\.txt$/i,
-
-    init : function(){
-
-        try{
-            var fso = new ActiveXObject("Scripting.FileSystemObject");
-        }catch(e){
-            var str = "" //"エラー:\r\n" + e.message + "\r\n\r\n"
-                   + "ActiveXを実行できませんでした。下記を試してみてください。\r\n\r\n"
-                   + "・ブラウザのインターネットオプション＞セキュリティ＞イントラネット＞レベルのカスタマイズでActiveXの実行を許可する。\r\n"
-                   + "・このHTMLファイルを右クリックして、「ブロックの解除」をする。\r\n"
-                   + "\r\n"
-                   + "(本ソフトウェアのご利用は自己責任でお願いします。)"
-
-            alert(str);
-            return false;
-        }
-
-        this.fso = fso;
-        this._setBaseFolder();
-    },
-
-    read : function (pagename){
-        var file = this.fso.openTextFile(this._getPagePath(pagename));
-        var content = file.readAll();
-        file.Close();
-        return content;
-    },
-
-    exists  :  function(pagename){
-        var filepath = this._getPagePath(pagename);
-        return this.fso.fileExists(filepath);
-    },
-
-    keys  :  function (){
-        var TextFiles = this._getFiles(this._getBaseFolder(), this._regExtension);
-        var PageNames = [];
-        for(var i in TextFiles){
-            PageNames.push(this.fso.getBaseName(TextFiles[i]));
-        }
-        return PageNames;
-    },
-
-
-    store  :  function (pagename, message){
-        var file = this.fso.createTextFile( this._getPagePath(pagename));
-        file.write(message);
-        file.Close();
-        return;
-    },
-
-
-    _delete  :  function(pagename) {
-        if(this.exists(pagename)){
-            this.fso.deleteFile(this._getPagePath(pagename));
-            return true;
-        }else{
-            return false;
-        }
-    },
-
-    _getPagePath  :  function (pagename){
-        return this._getBaseFolder().Path + "\\" +  pagename + ".txt";
-    },
-
-
-
-    _getFiles  :  function (objFolder, filter) {
-       var objEnu = new Enumerator(objFolder.Files);
-       var files = [];
-       for (; !objEnu.atEnd(); objEnu.moveNext() ){
-           if(objEnu.item().Name.match(filter)){
-       files.push(objEnu.item());
-           }
-       }
-       return files;
-    },
-
-
-    _setBaseFolder  :  function () {
-        var FullPath = location.href.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ");
-
-        if(this.fso.fileExists(FullPath)){
-            var thisFile = this.fso.getFile(FullPath);
-        }else{
-            alert('File not Exists:' + FullPath);
-        }
-
-        this._oBaseFolder = thisFile.parentFolder;
-    },
-
-    _getBaseFolder  :  function (){
-        return this._oBaseFolder;
-    },
-
-    dummy : null
-
-}
-
-window.onload = function(){ wiki.init() };
+window.onload = function(){ wiki.main() };
 </script>
 
 <style>
