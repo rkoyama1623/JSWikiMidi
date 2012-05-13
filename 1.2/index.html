@@ -46,7 +46,7 @@ var wiki = {
 　・Perlと同じライセンスに準じます。\n\
 ',
 
-       /** 日本語に特化するならかきのようにする。 */
+       /** 日本語に特化するなら下記のようにする。 */
        /*
         HomePageName : 'トップページ',
         EditPageName : '編集',
@@ -58,8 +58,7 @@ var wiki = {
 
         getLinkPattern : function() {
             return new RegExp('(' + this.URLPattern + ')|(' + this.WikiPattern + ')', 'g');
-        },
-        dummy : null
+        }
     },
 
     main : function() {
@@ -226,8 +225,7 @@ wiki.db_localStorage = {
 
     remove : function(pagename) {
         localStorage.removeItem(pagename);
-    },			    
-    dummy : null
+    }
 };    
 //===== file storage  ======    
 wiki.db_file = {
@@ -314,9 +312,8 @@ wiki.db_file = {
           alert('File not Exists:' + FullPath);
         }
         return thisFile.parentFolder;
-    },
+    }
 
-    dummy : null
 };// db
 
 //============  View Object ===================
@@ -375,9 +372,7 @@ wiki.view = {
             links.push(li);
         }
         this.setContent("<ul>" + links.join("") + "</ul>");
-    },
-
-    dummy : null
+    }
 };
 
 window.onload = function(){ wiki.main(); };
