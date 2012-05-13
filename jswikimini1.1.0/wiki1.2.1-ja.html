@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
+<!-- JSWikiMini Version 1.0 -->
 <head>
+<meta charset="shift_JIS">
 <script>
 /*
 JSWikiMini Version 1.1.0
--0.0.3     storage層をオブジェクトとして独立させた。
--0.0.4    config層をオブジェクトとして独立させた。
--0.0.5    view層をオブジェクトとして独立させた。
 -1.1.0    MVC構造になるように大規模にリファクタリングした。グローバル変数を１つのみにした。
 -1.1.1   HTMLとJSを完全に分離した。
 -1.2.1
@@ -14,10 +13,11 @@ JSWikiMini Version 1.1.0
 var wiki = {
     /* config */
     config : {
-        TopPageName : 'トップページ',
+        HomePageName : 'トップページ',
+
         IndexPageName : 'ページ一覧',
         regLink : /((mailto|http|https|ftp):[\x21-\x7E]*)|<(.+)>/g,
-        patternWikiLink : /<(.+)>/,
+        WikiPattern : /<(.+)>/,
 
         dummy : null
     },
@@ -69,7 +69,7 @@ wiki.openPage = function (pagename){
 }
 
 wiki.openHomePage = function(){
-    this.openPage(this.config.TopPageName);
+    this.openPage(this.config.HomePageName);
 };
 
 wiki.openIndexPage = function (){
@@ -128,8 +128,7 @@ wiki.makeLink = function ($0,$1,$2){
     var link;
     //alert("$0:" + $0 + "\n$1:" + $1 + "\n$2:" + $2 );
 
-    if(matched.match(wiki.config.patternWikiLink)){
-    //WikiNameとマッチした場合
+    if(matched.match(wiki.config.WikiPattern)){
         //alert("RegExp.$1:" + RegExp.$1);
         pagename = RegExp.$1;
         if(wiki.db.exists(pagename)){
