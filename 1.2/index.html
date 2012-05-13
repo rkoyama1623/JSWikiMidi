@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html>
-<!-- JSWikiMini Version 1.0 -->
 <head>
-<meta charset="shift_JIS">
+<meta charset="utf-8">
 <script>
 /*
 JSWikiMini Version 2.0.0
--1.0.0  ���ŁBIE(ActiveX)��p�B
--1.1.0  MVC�\���ɂ����B�O���[�o���ϐ����P�ɂ����B
--1.1.1  HTML��JS�����S�ɕ��������B
--1.2.2  �O���[�o���ϐ�����ɂ����B
--2.0.0  localStorage�Ή��BHelp����������B
+-1.0.0  初版。IE(ActiveX)専用。
+-1.1.0  MVC構造にした。グローバル変数を１つにした。
+-1.1.1  HTMLとJSを完全に分離した。
+-1.2.2  グローバル変数を一つにした。
+-2.0.0  localStorage対応。Helpを内蔵した。
 */
 var wiki = {
     config : {
@@ -20,39 +19,39 @@ var wiki = {
         IndexPageName : 'Index',
         WikiPattern : '([A-Z][a-z]+([A-Z][a-z]+)+)',
         URLPattern : '(mailto|http|https|ftp):[\x21-\x7E]*',
-        HelpContent : '�ylsWiki�Ƃ́H�z\n\
-�@lsWiki�́A�I�[�v���\�[�X��Wiki�c�[���ł��B\n\
-�@YukiWikiMini1.0.2��JavaScript�ōĎ����������̂ł��B\n\
+        HelpContent : '【lsWikiとは？】\n\
+　lsWikiは、オープンソースのWikiツールです。\n\
+　YukiWikiMini1.0.2をJavaScriptで再実装したものです。\n\
 \n\
-�@�g�����́AYukiWikiMini�Ƃقړ����ł��B\n\
-�@IE�Ŏg���ꍇ�́Aindex.html�����[�J���ɕۑ����Ďg���܂��B\n\
+　使い方は、YukiWikiMiniとほぼ同じです。\n\
+　IEで使う場合は、index.htmlをローカルに保存して使います。\n\
 \n\
-�y�g�����z\n\
-�@�E"FooBar"�̂悤�Ȍ`�̒P��������ƁA��������V�����y�[�W����邱�Ƃ��ł��܂��B\n\
-�@�EURL�������Ǝ����Ń����N�������܂��B\n\
-�@�E�y�[�W�����������Ƃ��͒��g����ɂ��ĕۑ����܂��B\n\
+【使い方】\n\
+　・FooBarのような形の単語を書くと、そこから新しいページを作ることができます。\n\
+　・URLを書くと自動でリンクが張られます。\n\
+　・ページを消したいときは中身を空にして保存します。\n\
 \n\
-�y�����z\n\
-�@�E�C���X�g�[���s�v�A�T�[�o�s�v\n\
-�@�@�@�ʓ|�ȃC���X�g�[���͕K�v����܂���B\n\
-�@�@�@index.html�t�@�C��������œ����܂��B\n\
-�@�@�@USB�������⋤�L�t�H���_�ɒu���Ă�(���Ԃ�)�����܂��B\n\
-�@�E������\n\
-�@�@�@�T�[�o�Ƃ̒ʐM���s���Ȃ��̂œ��삪�y���E�����ł��B\n\
+【特徴】\n\
+　・インストール不要、サーバ不要\n\
+　　　面倒なインストールは必要ありません。\n\
+　　　index.htmlファイル一つだけで動きます。\n\
+　　　USBメモリや共有フォルダに置いても(たぶん)動きます。\n\
+　・超高速\n\
+　　　サーバとの通信が行われないので動作が軽快・高速です。\n\
 \n\
-�y������z\n\
- �@�EIE6,7,8,9, Firefox, Chrome, Safari\n\
-�@\n\
-�y���C�Z���X�z\n\
-�@�EPerl�Ɠ������C�Z���X�ɏ����܂��B\n\
+【動作環境】\n\
+ 　・IE6,7,8,9, Firefox, Chrome, Safari\n\
+　\n\
+【ライセンス】\n\
+　・Perlと同じライセンスに準じます。\n\
 ',
 
-       /** ���{��ɓ�������Ȃ炩���̂悤�ɂ���B */
+       /** 日本語に特化するならかきのようにする。 */
        /*
-        HomePageName : '�g�b�v�y�[�W',
-        EditPageName : '�ҏW',
+        HomePageName : 'トップページ',
+        EditPageName : '編集',
         HelpPageName : 'Help',
-        IndexPageName : '�y�[�W�ꗗ',
+        IndexPageName : 'ページ一覧',
         WikiPattern : '<(.+)>',
         URLPattern : '((mailto|http|https|ftp):[\x21-\x7E]*)',
        */
@@ -196,7 +195,7 @@ var wiki = {
                 
             }
         }else{
-            //URL�ƃ}�b�`�����ꍇ
+            //URLとマッチした場合
             link = "<a href='" + matched + "'>" + matched + "</a>";
         }
         
@@ -240,12 +239,12 @@ wiki.db_file = {
             this._fso = new ActiveXObject("Scripting.FileSystemObject");
             return true;
         }catch(e){
-            var str = "" //"�G���[:\r\n" + e.message + "\r\n\r\n"
-                   + "ActiveX�����s�ł��܂���ł����B���L�������Ă݂Ă��������B\r\n\r\n"
-                   + "�E�u���E�U�̃C���^�[�l�b�g�I�v�V�������Z�L�����e�B���C���g���l�b�g�����x���̃J�X�^�}�C�Y��ActiveX�̎��s��������B\r\n"
-                   + "�E����HTML�t�@�C�����E�N���b�N���āA�u�u���b�N�̉����v������B\r\n"
+            var str = "" //"エラー:\r\n" + e.message + "\r\n\r\n"
+                   + "ActiveXを実行できませんでした。下記を試してみてください。\r\n\r\n"
+                   + "・ブラウザのインターネットオプション＞セキュリティ＞イントラネット＞レベルのカスタマイズでActiveXの実行を許可する。\r\n"
+                   + "・このHTMLファイルを右クリックして、「ブロックの解除」をする。\r\n"
                    + "\r\n"
-                   + "(�{�\�t�g�E�F�A�̂����p�͎��ȐӔC�ł��肢���܂��B)"
+                   + "(本ソフトウェアのご利用は自己責任でお願いします。)"
 
             alert(str);
             return false;
