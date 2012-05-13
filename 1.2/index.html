@@ -15,6 +15,7 @@ var wiki = {
     config : {
         HomePageName : 'FrontPage',
         EditPageName : 'Edit',
+        HelpPageName : 'Help',
         IndexPageName : 'Index',
         WikiPattern : '([A-Z][a-z]+([A-Z][a-z]+)+)',
         URLPattern : '(mailto|http|https|ftp):[\x21-\x7E]*',
@@ -23,6 +24,7 @@ var wiki = {
        /*
         HomePageName : 'トップページ',
         EditPageName : '編集',
+        HelpPageName : 'Help',
         IndexPageName : 'ページ一覧',
         WikiPattern : '<(.+)>',
         URLPattern : '((mailto|http|https|ftp):[\x21-\x7E]*)',
@@ -36,7 +38,19 @@ var wiki = {
 
     main : function() {
         var _this = this;
-        this.db.init();
+
+        if(typeof ActiveXObject === 'undefined') {
+           this.db = this.db_localStorage;
+        } else {
+           // IE
+           this.db = this.db_file;
+        }    
+
+        var ret = this.db.init();
+        if (!ret) {
+            return;
+        }
+
         this.view.init(this.config);
 
         this.view._id('linkToHomePage').onclick = function(){
@@ -156,13 +170,40 @@ var wiki = {
 }; // wiki
 
 //============  Storage Object ===================
-wiki.db = {
+//===== localStorage  ======    
+wiki.db_localStorage = {
+    init : function() {return true;},
+    exists : function(pagename){
+        return pagename in localStorage;
+    },
+    read : function(pagename) {
+        return localStorage.getItem(pagename);
+    },
+    keys : function(){
+        var ret = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            ret.push(localStorage.key(i));
+        }
+        return ret;
+    },
+    save : function(pagename, content){
+        localStorage.setItem(pagename, content);
+    },
+
+    remove : function(pagename) {
+        localStorage.removeItem(pagename);
+    },			    
+    dummy : null
+};    
+//===== file storage  ======    
+wiki.db_file = {
     _fso : null,
     _regExtension : /\.txt$/i,
 
     init : function() {
         try{
             this._fso = new ActiveXObject("Scripting.FileSystemObject");
+            return true;
         }catch(e){
             var str = "" //"エラー:\r\n" + e.message + "\r\n\r\n"
                    + "ActiveXを実行できませんでした。下記を試してみてください。\r\n\r\n"
@@ -172,8 +213,9 @@ wiki.db = {
                    + "(本ソフトウェアのご利用は自己責任でお願いします。)"
 
             alert(str);
-            return;
+            return false;
         }
+
     },
 
     read : function(pagename) {
@@ -197,9 +239,9 @@ wiki.db = {
         return PageNames;
     },
 
-    save : function(pagename, message) {
+    save : function(pagename, content) {
         var file = this._fso.createTextFile(this._getPagePath(pagename));
-        file.write(message);
+        file.write(content);
         file.Close();
         return;
     },
