@@ -13,138 +13,147 @@ JSWikiMini Version 1.1.0
 var wiki = {
     /* config */
     config : {
+        HomePageName : 'FrontPage',
+        EditPageName : 'Edit',
+        IndexPageName : 'Index',
+        WikiPattern : '([A-Z][a-z]+([A-Z][a-z]+)+)',
+        URLPattern : '(mailto|http|https|ftp):[\x21-\x7E]*',
+
+       /** 日本語に特化するならかきのようにする。 */
+       /*
         HomePageName : 'トップページ',
-
+        EditPageName : '編集',
         IndexPageName : 'ページ一覧',
-        regLink : /((mailto|http|https|ftp):[\x21-\x7E]*)|<(.+)>/g,
-        WikiPattern : /<(.+)>/,
+        WikiPattern : '<(.+)>',
+        URLPattern : '((mailto|http|https|ftp):[\x21-\x7E]*)',
+       */
 
+        getLinkPattern : function() {
+            return new RegExp('(' + this.URLPattern + ')|(' + this.WikiPattern + ')', 'g');
+        },
         dummy : null
     },
-    
+
     main : function() {
+        var _this = this;
+        this.db.init();
+        this.view.init(this.config);
 
-    var ret = this.db.init();
-    if(ret === false){
-        return false;
-    }
+        this.view._id('linkToHomePage').onclick = function(){
+            _this.openHomePage();
+            return false;
+        };
 
-    this.view._id("linkToHomePage").onclick   = function(){
-      wiki.openHomePage();
-      return false;
-    };
+        this.view._id('linkToEditPage').onclick = function(){
+            _this.editCurrentPage();
+            return false;
+        };
 
-    this.view._id("linkToEditPage").onclick  = function(){
-      wiki.editCurrentPage();
-      return false;
-    };
+        this.view._id('linkToIndexPage').onclick = function(){
+            _this.showIndexPage();
+            return false;
+        };
 
-    this.view._id("linkToIndexPage").onclick = function(){
-      wiki.openIndexPage();
-      return false; 
-    };
+        this.view._id('linkToHelpPage').onclick = function(){
+            _this.openHelpPage();
+            return false;
+        };
 
-    this.openHomePage();
-
-}
-};
-
-wiki.openPage = function (pagename){
-
-    this.view.setPageTitle(pagename);
-    this.view.showEditLink();
-
-    if(! this.db.exists(pagename) ){
-        this.view.setContent('');
-        return ;
-    }else{
-        var content = this.db.read(pagename);
-        //alert(content);
-        content = content.replace(this.config.regLink, this.makeLink );
-        //alert(content);
-        this.view.setContent("<pre>" + content + "</pre>");
-        return ;
-    }
-
-}
-
-wiki.openHomePage = function(){
-    this.openPage(this.config.HomePageName);
-};
-
-wiki.openIndexPage = function (){
-
-    this.view.setPageTitle(this.config.IndexPageName);
-    this.view.hideEditLink();
-
-    var PageNames = this.db.keys();
-
-    this.view.renderIndexPage(PageNames);
-    
-};
-
-
-wiki.savePage = function (pagename){
-    
-    var content = this.view.getInputValue();
-    
-    if( content ){
-        this.db.save(pagename, content);
-        this.openPage(pagename);
-    }else{
-        var ret = this.db.remove(pagename);
         this.openHomePage();
-    }
-    
-    return false;
-}
+    },
 
+    openPage : function(pagename){
+        this.view.setPageTitle(pagename);
+        this.view.showEditLink();
 
-wiki.editCurrentPage =  function(){
-    this.editPage( this.view.getCurrentPageName() );
-};
-
-
-wiki.editPage = function (pagename){
-
-    this.view.setPageTitle(pagename);
-
-    var content;
-
-    if( this.db.exists(pagename) ){
-        content = this.db.read(pagename);
-    }else{  
-        content = '';
-    }
-
-    this.view.renderInputForm(pagename, content);
-
-}
-
-// cannot bind this 
-// this method is a callback
-wiki.makeLink = function ($0,$1,$2){
-    var matched = $0;
-    var link;
-    //alert("$0:" + $0 + "\n$1:" + $1 + "\n$2:" + $2 );
-
-    if(matched.match(wiki.config.WikiPattern)){
-        //alert("RegExp.$1:" + RegExp.$1);
-        pagename = RegExp.$1;
-        if(wiki.db.exists(pagename)){
-            link = "<a href='javascript:wiki.openPage(\"" + pagename + "\");'>" + pagename + "</a>";
-             
+        if(! this.db.exists(pagename) ){
+            this.view.setContent('');
         }else{
-            link = pagename + "<a href='javascript:wiki.editPage(\"" + pagename + "\")' title='create a Page'>?</a>";
-            
+            var content = this.db.read(pagename);
+            content = content.replace(this.config.getLinkPattern(), this.makeLink );
+            this.view.setContent("<pre>" + content + "</pre>");
         }
-    }else{
-    //URLとマッチした場合
-        link = "<a href='" + matched + "'>" + matched + "</a>";
+    },
+
+    openHomePage : function(){
+        this.openPage(this.config.HomePageName);
+        return false;
+    },
+
+    openHelpPage : function (){
+        this.openPage(this.config.HelpPageName);
+        return false;
+    },
+
+    editCurrentPage : function (){
+        this.editPage(this.view.getCurrentPageName());
+        return false;
+    },
+
+    showIndexPage : function (){
+        this.view.setPageTitle(this.config.IndexPageName);
+        this.view.hideEditLink();
+
+        var PageNames = this.db.keys();
+
+        this.view.renderIndexPage(PageNames);
+        return false;
+    },
+
+    savePage : function (pagename){
+
+        var content = this.view.getInputValue();
+        
+        if (content) {
+            this.db.save(pagename, content);
+            this.openPage(pagename);
+        } else {
+            var ret = this.db.remove(pagename);
+            this.openHomePage();
+            return false;
+        }
+        
+        return false;
+    },
+
+    editPage : function(pagename) {
+
+        this.view.setPageTitle(pagename);
+
+        var content = '';
+
+        if( this.db.exists(pagename) ){
+            content = this.db.read(pagename);
+        }
+
+        this.view.renderInputForm(pagename, content);
+    },
+
+    makeLink : function($0,$1,$2){
+        var _this = wiki;
+        var matched = $0;
+        var link;
+
+        if(matched.match(_this.config.WikiPattern)){
+            pagename = RegExp.$1;
+
+            if(_this.db.exists(pagename)){
+                link = "<a href='javascript:wiki.openPage(\""
+                     + pagename
+                     + "\");'>" + pagename + "</a>";
+
+            } else {
+                link = pagename + "<a href='javascript:wiki.editPage(\"" + pagename + "\")' title='create a Page'>?</a>";
+                
+            }
+        }else{
+            //URLとマッチした場合
+            link = "<a href='" + matched + "'>" + matched + "</a>";
+        }
+        
+        return link;
     }
-    
-    return link;
-}
+}; // wiki
 
 //============  Storage Object ===================
 wiki.db = {
@@ -237,10 +246,11 @@ wiki.db = {
 //============  View Object ===================
 wiki.view = {
 
-
-
-
-
+    init : function(config) {
+        this._id("linkToHomePage").innerText = config.HomePageName;
+        this._id("linkToIndexPage").innerText = config.IndexPageName;
+        this._id("linkToEditPage").innerText  = config.EditPageName;
+    },
 
     setPageTitle : function(pagename) {
         document.title = pagename;
@@ -294,9 +304,8 @@ wiki.view = {
     dummy : null
 };
 
-window.onload = function(){ wiki.main() };
+window.onload = function(){ wiki.main(); };
 </script>
-
 <style>
 body { font-family: "Courier New", monospace; }
 pre { line-height:130%; }
@@ -304,7 +313,6 @@ a { text-decoration: none }
 a:hover { text-decoration: underline }
 table { width:100%; border:none; }
 </style>
-                
     </head>
     <body>
         <table>
@@ -313,14 +321,13 @@ table { width:100%; border:none; }
                     <h1 id="headerH1"></h1>
                 </td>
                 <td align="right">
-                    <a id="linkToHomePage" href="#">トップページ</a> | 
-                    <span id="editLink"><a href="" id="linkToEditPage">編集</a> | </span>
-                    <a href="" id="linkToIndexPage">ページ一覧</a> | 
+                    <a id="linkToHomePage" href="#">Blank</a> | 
+                    <span id="editLink"><a id="linkToEditPage" href="#">Blank</a> | </span>
+                    <a id="linkToIndexPage" href="#">Blank</a> | 
                     <a id="linkToHelpPage" href="#">Help</a> | 
                 </td>
             </tr>
         </table>
     <div id="content"></div>
-
     </body>
 </html>
