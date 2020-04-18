@@ -21,7 +21,7 @@ if(fso.fileExists(FullPath)){
 var BaseFolder = BaseFile.parentFolder;
 /** Parameters */
 /* RegExp Patterns */
-var WikiName = '[A-Z][a-z]+([A-Z][a-z]+)+';
+var WikiName = '\\[\\[.+\\]\\]';
 var URLPattern = '(mailto|http|https|ftp):[\x21-\x7E]*';
 var LinkPattern = new RegExp('(' + URLPattern + ')|(' + WikiName + ')','g');
 var ExtensionFilter = /\.txt$/i;
@@ -165,7 +165,7 @@ function makeLink($0,$1,$2){
 
     if(matched.match(WikiName)){
     //WikiNameÇ∆É}ÉbÉ`ÇµÇΩèÍçá
-        pagename = matched;
+        pagename = matched.replace("[[","").replace("]]", "");
 
         if(pageExists(pagename)){
             link = "<a href='javascript:openPage(\""
