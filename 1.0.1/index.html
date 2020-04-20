@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <!-- JSWikiMini Version 1.0 -->
     <head>
@@ -11,7 +12,7 @@ try{
 }
 
 var BaseURL = location.href;
-var FullPath = BaseURL.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ");
+var FullPath = BaseURL.replace(/file:\/\/\//, "").replace(/file:\/\//,"//").replace(/%20/g, " ").replace(/\?.+/g, "");
 
 if(fso.fileExists(FullPath)){
     var BaseFile = fso.getFile(FullPath);
@@ -27,7 +28,7 @@ var LinkPattern = new RegExp('(' + URLPattern + ')|(' + WikiName + ')','g');
 var ExtensionFilter = /\.txt$/i;
 
 /* UI Definitions */
-var FirstPageName = 'FrontPage';
+var FirstPageName = getParam('pagename') || 'FrontPage';
 var EditPageName = 'Edit';
 var IndexPageName = 'Index';
 var HelpPageName = 'Help';
@@ -129,6 +130,7 @@ function editPage(pagename){
 }
 
 function openPage(pagename){
+    history.pushState(pagename, "JSWikiMini: " + pagename, "?pagename="+pagename)
     setPageTitle(pagename);
     $id("editLink").style.display = "inline";
 
@@ -230,6 +232,26 @@ function dump(str){
     if(debug){ alert(str); }
 }
 
+/**
+ * Get the URL parameter value
+ *
+ * @param  name {string} パラメータのキー文字列
+ * @return  url {url} 対象のURL文字列（任意）
+ */
+function getParam(name, url) {
+if (!url) url = window.location.href;
+name = name.replace(/[\[\]]/g, "\\$&");
+var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+results = regex.exec(url);
+if (!results) return null;
+if (!results[2]) return '';
+return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+window.onpopstate=function(e){
+if (!e.state) return;
+openPage(e.state);
+}
 
 </script>
 
