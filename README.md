@@ -1,10 +1,12 @@
-# JSWikiMini2
+# JSWikiMidi
+JSWikiMiniを機能拡張したhtmlファイル。
+
 ## 開発の歴史
 - Ward Cunningham氏によって[WikiWikiWeb](http://wiki.c2.com/)が開発された。
 - 結城浩氏によって超軽量なWikiである[YukiWiki(Perl)](https://www.hyuki.com/yukiwiki/)(Perl)が開発された。
 - DQNEO氏によって[YukiWiki(Perl)](https://www.hyuki.com/yukiwiki/)がJavaScriptに移植され、[JSWikiMini](https://github.com/DQNEO/JSWikiMini)と名付けられた。  
 ブラウザベースであるため、サーバーを使わずに編集ができることを特徴としている。
-- JSWikiMini2はJSWikiMiniをForkし、機能拡張した。
+- JSWikiMidiはJSWikiMiniをForkし、機能拡張した。
 
 ## LICENSE
 以上のような歴史的経緯を考慮し、同プログラムは以下のライセンスに準じる。
